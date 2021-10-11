@@ -2,11 +2,9 @@ const BASE_URL = 'https://movie-list.alphacamp.io'
 const INDEX_URL = BASE_URL + '/api/v1/movies/'
 const POSTER_URL = BASE_URL + '/posters/'
 
-const movies = []
+const movies = JSON.parse(localStorage.getItem('favoriteMovies')) || []
 
 const dataPanel = document.querySelector('#data-panel')
-const searchForm = document.querySelector('#search-form')
-const searchInput = document.querySelector('#search-input')
 
 function renderMovieList(data) {
   let rawHTML = ''
@@ -23,7 +21,7 @@ function renderMovieList(data) {
             <div class="card-footer">
               <button class="btn btn-primary btn-show-movie" data-toggle="modal"
                 data-target="#movie-modal" data-id="${item.id}">More</button>
-              <button class="btn btn-info btn-add-favorite" data-id="${item.id}">+</button>
+              <button class="btn btn-danger btn-remove-favorite" data-id="${item.id}">X</button>
             </div>
           </div>
         </div>
@@ -50,42 +48,28 @@ function showMovieModal(id) {
   })
 }
 
-function addFToFavorite(id) {
-  const list = JSON.parse(localStorage.getItem('favoriteMovies',)) || []
-  const movie = movies.find((movie) => movie.id === id)
-  if (list.some((movie) => movie.id === id)) {
-    return alert('此電影已加入最愛清單！')
+function removeFromFavorite(id) {
+  const movieIndex = movies.findIndex((movie) => movie.id === id)
+  movies.splice(movieIndex, 1)
+  localStorage.setItem('favoriteMovies', JSON.stringify(movies))
+  if (movies.length) {
+    renderMovieList(movies)
+  } else {
+    renderMovieList(movies)
+    alert('無收藏任何電影')
   }
-  list.push(movie)
-  localStorage.setItem('favoriteMovies', JSON.stringify(list))
-  alert('已加入電影收藏清單')
 }
 
 dataPanel.addEventListener('click', function onPanelClicked(event) {
   if (event.target.matches('.btn-show-movie')) {
     showMovieModal(Number(event.target.dataset.id))
-  } else if (event.target.matches('.btn-add-favorite')) {
-    addFToFavorite(Number(event.target.dataset.id))
+  } else if (event.target.matches('.btn-remove-favorite')) {
+    removeFromFavorite(Number(event.target.dataset.id))
   }
 })
 
-searchForm.addEventListener('submit', function onSearchFromSubmitted(event) {
-  event.preventDefault()
-  const keyword = searchInput.value.trim().toLowerCase()
-  let filteredMovies = []
-
-  filteredMovies = movies.filter((movie) =>
-    movie.title.toLowerCase().includes(keyword)
-  )
-
-  if (!filteredMovies.length) {
-    return alert(`Cannot find movie with keyword: ${keyword}`)
-  }
-
-  renderMovieList(filteredMovies)
-})
-
-axios.get(INDEX_URL).then((response) => {
-  movies.push(...response.data.results)
+if (movies.length) {
   renderMovieList(movies)
-})
+} else {
+  alert('無收藏任何電影')
+}
