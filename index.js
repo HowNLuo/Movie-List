@@ -91,6 +91,7 @@ dataPanel.addEventListener('click', function onPanelClicked(event) {
 })
 
 paginator.addEventListener('click', function onPaginatorClicked(event) {
+  if (event.target.tagName !== 'A') return
   const page = Number(event.target.dataset.page)
   renderMovieList(getMoviesByPage(page))
 })
