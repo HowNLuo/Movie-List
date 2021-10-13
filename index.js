@@ -3,10 +3,13 @@ const INDEX_URL = BASE_URL + '/api/v1/movies/'
 const POSTER_URL = BASE_URL + '/posters/'
 
 const movies = []
+const Movie_Per_Page = 12
+let filteredMovies = []
 
 const dataPanel = document.querySelector('#data-panel')
 const searchForm = document.querySelector('#search-form')
 const searchInput = document.querySelector('#search-input')
+const paginator = document.querySelector('#paginator')
 
 function renderMovieList(data) {
   let rawHTML = ''
@@ -32,6 +35,24 @@ function renderMovieList(data) {
   })
 
   dataPanel.innerHTML = rawHTML
+}
+
+function renderPaginator(amount) {
+  const numberOfPages = Math.ceil(amount / Movie_Per_Page)
+  let rawHTML = ''
+
+  for (let page = 1; page <= numberOfPages; page++) {
+    rawHTML += `
+      <li class="page-item"><a class="page-link" href="#" data-page="${page}">${page}</a></li>
+    `
+  }
+  paginator.innerHTML = rawHTML
+}
+
+function getMoviesByPage(page) {
+  const data = filteredMovies.length ? filteredMovies : movies
+  const startIndex = (page - 1) * Movie_Per_Page
+  return data.slice(startIndex, startIndex + Movie_Per_Page)
 }
 
 function showMovieModal(id) {
@@ -69,10 +90,14 @@ dataPanel.addEventListener('click', function onPanelClicked(event) {
   }
 })
 
+paginator.addEventListener('click', function onPaginatorClicked(event) {
+  const page = Number(event.target.dataset.page)
+  renderMovieList(getMoviesByPage(page))
+})
+
 searchForm.addEventListener('submit', function onSearchFromSubmitted(event) {
   event.preventDefault()
   const keyword = searchInput.value.trim().toLowerCase()
-  let filteredMovies = []
 
   filteredMovies = movies.filter((movie) =>
     movie.title.toLowerCase().includes(keyword)
@@ -82,10 +107,12 @@ searchForm.addEventListener('submit', function onSearchFromSubmitted(event) {
     return alert(`Cannot find movie with keyword: ${keyword}`)
   }
 
-  renderMovieList(filteredMovies)
+  renderPaginator(filteredMovies.length)
+  renderMovieList(getMoviesByPage(1))
 })
 
 axios.get(INDEX_URL).then((response) => {
   movies.push(...response.data.results)
-  renderMovieList(movies)
+  renderPaginator(movies.length)
+  renderMovieList(getMoviesByPage(1))
 })
